@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "../drizzle/schema";
-import { eq, and, desc, asc } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 let db: ReturnType<typeof drizzle> | null = null;
 
@@ -14,69 +14,35 @@ export async function getDb() {
 }
 
 // Keep these exactly:
-export async function upsertUser(user: { id: string; email: string }) {
+export async function upsertUser(userId: number, email: string) {
   const db = await getDb();
-  await db!.insert(schema.users).values({
-    id: user.id,
-    email: user.email,
-  }).onConflictDoUpdate({
-    target: schema.users.id,
-    set: { email: user.email },
-  });
+  await db!.insert(schema.users).values({ userId, email }).onConflict('userId').doUpdate().set({ email });
 }
 
 export async function getUserByOpenId(openId: string) {
   const db = await getDb();
-  return db!.select().from(schema.users).where(eq(schema.users.id, openId)).first();
+  return db!.select().from(schema.users).where(eq(schema.users.openId, openId)).first();
 }
 
 // Add your business-specific helpers:
-
-export async function getProjectsByUserId(userId: number) {
+export async function getSubscriptionsByUserId(userId: number): Promise<schema.Subscription[]> {
   const db = await getDb();
-  return db!.select().from(schema.projects).where(eq(schema.projects.userId, userId));
+  return db!.select().from(schema.subscriptions).where(eq(schema.subscriptions.userId, userId));
 }
 
-export async function createProject(data: { userId: number; name: string; description?: string }) {
+export async function createSubscription(data: Omit<schema.Subscription, 'subscriptionId' | 'createdAt'>): Promise<number> {
   const db = await getDb();
-  await db!.insert(schema.projects).values({
-    userId: data.userId,
-    name: data.name,
-    description: data.description,
-  });
-  return { success: true };
+  const result = await db!.insert(schema.subscriptions).values(data).returning(schema.subscriptions.subscriptionId);
+  return result[0].subscriptionId;
 }
 
-export async function getTasksByProjectId(projectId: number) {
+export async function getPlans(): Promise<schema.Plan[]> {
   const db = await getDb();
-  return db!.select().from(schema.tasks).where(eq(schema.tasks.projectId, projectId));
+  return db!.select().from(schema.plans);
 }
 
-export async function createTask(data: { projectId: number; userId: number; title: string; description?: string; status: string; priority: number; dueDate?: Date }) {
+export async function createPlan(data: Omit<schema.Plan, 'planId' | 'createdAt'>): Promise<number> {
   const db = await getDb();
-  await db!.insert(schema.tasks).values({
-    projectId: data.projectId,
-    userId: data.userId,
-    title: data.title,
-    description: data.description,
-    status: data.status,
-    priority: data.priority,
-    dueDate: data.dueDate,
-  });
-  return { success: true };
-}
-
-export async function getCommentsByTaskId(taskId: number) {
-  const db = await getDb();
-  return db!.select().from(schema.comments).where(eq(schema.comments.taskId, taskId));
-}
-
-export async function createComment(data: { taskId: number; userId: number; content: string }) {
-  const db = await getDb();
-  await db!.insert(schema.comments).values({
-    taskId: data.taskId,
-    userId: data.userId,
-    content: data.content,
-  });
-  return { success: true };
+  const result = await db!.insert(schema.plans).values(data).returning(schema.plans.planId);
+  return result[0].planId;
 }
