@@ -1,29 +1,28 @@
 import { Route, Switch } from "wouter";
-import { ThemeProvider } from "@/components/ui/theme-provider";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip-provider";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { Redirect } from "wouter";  // use Redirect, NOT Navigate
+import { Toaster } from "@/components/ui/sonner";  // NOT @/components/ui/toaster
+import { TooltipProvider } from "@/components/ui/tooltip";  // NOT tooltip-provider
+import ErrorBoundary from "./components/ErrorBoundary";  // default import, NOT named
+import { ThemeProvider } from "./contexts/ThemeContext";  // NOT @/components/ui/theme-provider
+import NotFound from "./pages/NotFound";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
-import FeaturePage from "./pages/FeaturePage";
-import NotFound from "./pages/NotFound";
 
-function App() {
+export default function App() {
   return (
-    <ThemeProvider defaultTheme="light">
-      <TooltipProvider>
-        <ErrorBoundary>
+    <ErrorBoundary>
+      <ThemeProvider defaultTheme="light">
+        <TooltipProvider>
+          <Toaster />
           <Switch>
             <Route path="/" component={Home} />
             <Route path="/dashboard" component={Dashboard} />
-            <Route path="/feature" component={FeaturePage} />
-            <Route component={NotFound} />
+            <Route>
+              <NotFound />
+            </Route>
           </Switch>
-          <Toaster />
-        </ErrorBoundary>
-      </TooltipProvider>
-    </ThemeProvider>
+        </TooltipProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
-
-export default App;
