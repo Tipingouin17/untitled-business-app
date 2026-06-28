@@ -23,34 +23,25 @@ export type InsertUser = typeof users.$inferInsert;
 
 // ─── Business-specific tables ─────────────────────────────────────────────────
 
-export const projects = pgTable("projects", {
-  id: serial("id").primaryKey(),
-  userId: integer("userId").notNull(),
-  name: varchar("name", { length: 255 }).notNull(),
+export const subscriptions = pgTable("subscriptions", {
+  subscriptionId: serial("subscription_id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  planId: integer("plan_id").notNull(),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date"),
+  status: varchar("status", 50).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Subscription = typeof subscriptions.$inferSelect;
+
+export const plans = pgTable("plans", {
+  planId: serial("plan_id").primaryKey(),
+  name: varchar("name", 255).notNull(),
   description: text("description"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  price: numeric("price", 10, 2).notNull(),
+  features: text("features").notNull(), // JSON stored as text
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const tasks = pgTable("tasks", {
-  id: serial("id").primaryKey(),
-  projectId: integer("projectId").notNull(),
-  userId: integer("userId").notNull(),
-  title: varchar("title", { length: 255 }).notNull(),
-  description: text("description"),
-  status: varchar("status", { length: 50 }).notNull(),
-  priority: integer("priority").notNull(),
-  dueDate: timestamp("dueDate"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export const comments = pgTable("comments", {
-  id: serial("id").primaryKey(),
-  taskId: integer("taskId").notNull(),
-  userId: integer("userId").notNull(),
-  content: text("content").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type Project = typeof projects.$inferSelect;
-export type Task = typeof tasks.$inferSelect;
-export type Comment = typeof comments.$inferSelect;
+export type Plan = typeof plans.$inferSelect;
